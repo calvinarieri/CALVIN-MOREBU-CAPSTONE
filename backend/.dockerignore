@@ -1,0 +1,11 @@
+.git
+.gitignore
+venv
+.env
+__pycache__
+*.pyc
+*.sqlite3
+media
+staticfiles
+.pytest_cache
+.coverage
