@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: backend
   namespace: calvin-arieri
+
 spec:
   replicas: 2
 
@@ -25,10 +26,27 @@ spec:
           imagePullPolicy: Always
 
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
 
           env:
-            # Database
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: SECRET_KEY
+
+            - name: DEBUG
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: DEBUG
+
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: ALLOWED_HOSTS
+
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -59,7 +77,6 @@ spec:
                   name: database-secret
                   key: DB_PASSWORD
 
-            # Redis
             - name: REDIS_HOST
               value: redis-service
 
@@ -70,6 +87,7 @@ spec:
             requests:
               cpu: "200m"
               memory: "256Mi"
+
             limits:
               cpu: "500m"
               memory: "512Mi"
@@ -77,13 +95,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
-            initialDelaySeconds: 15
+              port: 8000
+            initialDelaySeconds: 20
             periodSeconds: 10
 
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
-            initialDelaySeconds: 5
+              port: 8000
+            initialDelaySeconds: 10
             periodSeconds: 5

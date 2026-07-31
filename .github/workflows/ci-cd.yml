@@ -56,7 +56,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
 
-      - name: Update Kubernetes Manifests
+      - name: Update Kubernetes Image References
         run: |
           sed -i "s|IMAGE_FRONTEND|$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG|g" k8s/deployment-frontend.yaml
           sed -i "s|IMAGE_BACKEND|$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG|g" k8s/deployment-backend.yaml
@@ -72,6 +72,10 @@ jobs:
             --region $AWS_REGION \
             --name ${{ secrets.EKS_CLUSTER_NAME }}
 
+      - name: Create Namespace
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+
       - name: Create Database Secret
         run: |
           kubectl create secret generic database-secret \
@@ -83,14 +87,58 @@ jobs:
             --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy to EKS
+      - name: Create Django Secret
         run: |
-          kubectl apply -f k8s/namespace.yaml
+          kubectl create secret generic django-secret \
+            --namespace calvin-arieri \
+            --from-literal=SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+            --from-literal=DEBUG="${{ secrets.DJANGO_DEBUG }}" \
+            --from-literal=ALLOWED_HOSTS="${{ secrets.DJANGO_ALLOWED_HOSTS }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy Redis
+        run: |
+          kubectl apply -f k8s/redis-deployment.yaml
+          kubectl apply -f k8s/redis-service.yaml
+
+      - name: Deploy Application
+        run: |
           kubectl apply -f k8s/deployment-frontend.yaml
           kubectl apply -f k8s/service-frontend.yaml
           kubectl apply -f k8s/deployment-backend.yaml
           kubectl apply -f k8s/service-backend.yaml
           kubectl apply -f k8s/ingress.yaml
 
-          kubectl rollout status deployment/frontend -n calvin-arieri
-          kubectl rollout status deployment/backend -n calvin-arieri
+      - name: Wait for Backend Deployment
+        run: |
+          kubectl rollout status deployment/backend \
+            -n calvin-arieri \
+            --timeout=180s
+
+      - name: Run Django Migrations
+        run: |
+          kubectl exec \
+            -n calvin-arieri \
+            deploy/backend \
+            -- python manage.py migrate
+
+      - name: Collect Static Files
+        run: |
+          kubectl exec \
+            -n calvin-arieri \
+            deploy/backend \
+            -- python manage.py collectstatic --noinput
+
+      - name: Verify Deployment
+        run: |
+          kubectl rollout status deployment/redis \
+            -n calvin-arieri \
+            --timeout=180s
+
+          kubectl rollout status deployment/frontend \
+            -n calvin-arieri \
+            --timeout=180s
+
+          kubectl rollout status deployment/backend \
+            -n calvin-arieri \
+            --timeout=180s
