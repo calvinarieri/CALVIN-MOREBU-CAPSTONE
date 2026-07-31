@@ -92,6 +92,12 @@ jobs:
         run: |
           kubectl create secret generic database-secret \
             --namespace $NAMESPACE \
+            --from-literal=DB_ENGINE="mysql" \
+            --from-literal=DB_HOST="${{ secrets.DB_HOST }}" \
+            --from-literal=DB_PORT="${{ secrets.DB_PORT }}" \
+            --from-literal=DB_NAME="${{ secrets.DB_NAME }}" \
+            --from-literal=DB_USER="${{ secrets.DB_USER }}" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             --from-literal=POSTGRES_HOST="${{ secrets.DB_HOST }}" \
             --from-literal=POSTGRES_PORT="${{ secrets.DB_PORT }}" \
             --from-literal=POSTGRES_DB="${{ secrets.DB_NAME }}" \
@@ -106,7 +112,7 @@ jobs:
             --namespace $NAMESPACE \
             --from-literal=SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
             --from-literal=DEBUG="False" \
-            --from-literal=ALLOWED_HOSTS="${{ secrets.DJANGO_ALLOWED_HOSTS }}" \
+            --from-literal=ALLOWED_HOSTS="*" \
             --dry-run=client -o yaml | kubectl apply -f -
 
 

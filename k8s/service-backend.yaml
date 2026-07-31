@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-service
+  name: backend
   namespace: calvin-arieri
 
 spec:
@@ -9,7 +9,7 @@ spec:
     app: backend
 
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 8000
+      targetPort: 8000
 
   type: ClusterIP
