@@ -56,11 +56,6 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
 
-      - name: Update Kubernetes Image References
-        run: |
-          sed -i "s|IMAGE_FRONTEND|$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG|g" k8s/deployment-frontend.yaml
-          sed -i "s|IMAGE_BACKEND|$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG|g" k8s/deployment-backend.yaml
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
@@ -76,15 +71,24 @@ jobs:
         run: |
           kubectl apply -f k8s/namespace.yaml
 
+      - name: Create ECR Pull Secret
+        run: |
+          kubectl create secret docker-registry ecr-secret \
+            --namespace calvin-arieri \
+            --docker-server=$ECR_REGISTRY \
+            --docker-username=AWS \
+            --docker-password=$(aws ecr get-login-password --region $AWS_REGION) \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Create Database Secret
         run: |
           kubectl create secret generic database-secret \
             --namespace calvin-arieri \
-            --from-literal=DB_HOST="${{ secrets.DB_HOST }}" \
-            --from-literal=DB_PORT="${{ secrets.DB_PORT }}" \
-            --from-literal=DB_NAME="${{ secrets.DB_NAME }}" \
-            --from-literal=DB_USER="${{ secrets.DB_USER }}" \
-            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=POSTGRES_HOST="${{ secrets.DB_HOST }}" \
+            --from-literal=POSTGRES_PORT="${{ secrets.DB_PORT }}" \
+            --from-literal=POSTGRES_DB="${{ secrets.DB_NAME }}" \
+            --from-literal=POSTGRES_USER="${{ secrets.DB_USER }}" \
+            --from-literal=POSTGRES_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create Django Secret
@@ -101,19 +105,26 @@ jobs:
           kubectl apply -f k8s/redis-deployment.yaml
           kubectl apply -f k8s/redis-service.yaml
 
+      - name: Update Kubernetes Images
+        run: |
+          sed -i "s|IMAGE_FRONTEND|$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG|g" k8s/deployment-frontend.yaml
+          sed -i "s|IMAGE_BACKEND|$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG|g" k8s/deployment-backend.yaml
+
       - name: Deploy Application
         run: |
           kubectl apply -f k8s/deployment-frontend.yaml
           kubectl apply -f k8s/service-frontend.yaml
+
           kubectl apply -f k8s/deployment-backend.yaml
           kubectl apply -f k8s/service-backend.yaml
+
           kubectl apply -f k8s/ingress.yaml
 
       - name: Wait for Backend Deployment
         run: |
           kubectl rollout status deployment/backend \
             -n calvin-arieri \
-            --timeout=180s
+            --timeout=300s
 
       - name: Run Django Migrations
         run: |
@@ -131,14 +142,14 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          kubectl rollout status deployment/redis \
-            -n calvin-arieri \
-            --timeout=180s
-
           kubectl rollout status deployment/frontend \
             -n calvin-arieri \
-            --timeout=180s
+            --timeout=300s
 
           kubectl rollout status deployment/backend \
             -n calvin-arieri \
-            --timeout=180s
+            --timeout=300s
+
+          kubectl rollout status deployment/redis \
+            -n calvin-arieri \
+            --timeout=300s
