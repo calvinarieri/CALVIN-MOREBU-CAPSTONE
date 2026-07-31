@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: backend
   namespace: calvin-arieri
-
 spec:
   replicas: 2
 
@@ -29,6 +28,7 @@ spec:
             - containerPort: 8080
 
           env:
+            # Database
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -58,6 +58,13 @@ spec:
                 secretKeyRef:
                   name: database-secret
                   key: DB_PASSWORD
+
+            # Redis
+            - name: REDIS_HOST
+              value: redis-service
+
+            - name: REDIS_PORT
+              value: "6379"
 
           resources:
             requests:

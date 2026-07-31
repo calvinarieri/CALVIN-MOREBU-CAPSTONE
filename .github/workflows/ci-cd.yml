@@ -33,9 +33,10 @@ jobs:
       - name: Build Frontend Image
         run: |
           docker build \
+            -f frontend/Dockerfile \
             -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest \
             -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG \
-            ./frontend
+            frontend
 
       - name: Push Frontend Image
         run: |
@@ -45,9 +46,10 @@ jobs:
       - name: Build Backend Image
         run: |
           docker build \
+            -f backend/Dockerfile \
             -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest \
             -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG \
-            ./backend
+            backend
 
       - name: Push Backend Image
         run: |
