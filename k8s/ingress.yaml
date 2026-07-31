@@ -1,5 +1,6 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
+
 metadata:
   name: frontend-ingress
   namespace: calvin-arieri
@@ -8,12 +9,27 @@ metadata:
     kubernetes.io/ingress.class: nginx
 
 spec:
+
   rules:
     - host: calvin-arieri.capstone.company.com
+
       http:
+
         paths:
+
+          - path: /api
+            pathType: Prefix
+
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+
+
           - path: /
             pathType: Prefix
+
             backend:
               service:
                 name: frontend-service
