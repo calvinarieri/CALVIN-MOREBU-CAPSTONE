@@ -9,6 +9,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
 
 spec:
+  ingressClassName: nginx
 
   rules:
     - host: calvin-arieri.capstone.company.com
