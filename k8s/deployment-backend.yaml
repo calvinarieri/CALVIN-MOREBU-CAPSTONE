@@ -70,16 +70,16 @@ spec:
 
           startupProbe:
             httpGet:
-              path: /api/health/
+              path: /health/
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 12
 
           livenessProbe:
             httpGet:
-              path: /api/health/
+              path: /health/
               port: 8000
             initialDelaySeconds: 40
             periodSeconds: 15
@@ -88,9 +88,9 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /api/health/
+              path: /health/
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
