@@ -1,53 +1,41 @@
-
 FROM python:3.12-slim AS builder
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
-
-WORKDIR /build
-
-# Install build dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-
-RUN pip install --upgrade pip && \
-    pip install --prefix=/install -r requirements.txt
-
-
-# Runtime Stage
-FROM python:3.12-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user
-RUN groupadd -r django && \
-    useradd -r -g django -d /app -s /usr/sbin/nologin django
 
 WORKDIR /app
 
-# Copy installed packages
-COPY --from=builder /install /usr/local
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    gcc \
+    pkg-config \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy application
+
+COPY requirements.txt .
+
+
+RUN python -m pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
+
+
 COPY . .
 
-# Set ownership
-RUN chown -R django:django /app
 
-USER django
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+COPY --from=builder /install /usr/local
+
+
+COPY . .
+
 
 EXPOSE 8000
+
 
 CMD ["gunicorn", "hims_kb.wsgi:application", "--bind", "0.0.0.0:8000"]
