@@ -1,6 +1,5 @@
 import uuid
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
 from articles.models import *
 
 class ChatSession(models.Model):
@@ -23,7 +22,7 @@ class ChatMessage(models.Model):
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
     question = models.TextField()
     response = models.TextField(blank=True, null=True)
-    article_ids = ArrayField(models.UUIDField(), blank=True, default=list)
+    article_ids = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
