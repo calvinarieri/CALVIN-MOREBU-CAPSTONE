@@ -123,9 +123,34 @@ jobs:
 
 
       - name: Update Kubernetes Image References
+        env:
+          FRONTEND_IMAGE: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ env.IMAGE_TAG }}
+          BACKEND_IMAGE: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ env.IMAGE_TAG }}
         run: |
-          sed -i "s|IMAGE_FRONTEND|$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG|g" k8s/deployment-frontend.yaml
-          sed -i "s|IMAGE_BACKEND|$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG|g" k8s/deployment-backend.yaml
+          set -euo pipefail
+
+          echo "Frontend image: $FRONTEND_IMAGE"
+          echo "Backend image: $BACKEND_IMAGE"
+
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          frontend_image = os.environ["FRONTEND_IMAGE"]
+          backend_image = os.environ["BACKEND_IMAGE"]
+          pattern = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?(?:/[a-z0-9._/-]+)+(?::[a-zA-Z0-9._-]+)?$")
+
+          for image, path in [(frontend_image, "k8s/deployment-frontend.yaml"), (backend_image, "k8s/deployment-backend.yaml")]:
+              if not image or not pattern.match(image):
+                  raise SystemExit(f"Invalid image reference: {image}")
+              text = Path(path).read_text()
+              if path.endswith("deployment-frontend.yaml"):
+                  text = text.replace("IMAGE_FRONTEND", image)
+              else:
+                  text = text.replace("IMAGE_BACKEND", image)
+              Path(path).write_text(text)
+          PY
 
 
       - name: Deploy Frontend
