@@ -43,7 +43,7 @@ export default function HomePage() {
       <HomeNavBar />
 
       {/* Hero Header */}
-      <header className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white py-16 px-6 text-center">
+      <header className="bg-gradient-to-br from-amber-900 via-indigo-950 to-amber-900 text-white py-16 px-6 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-extrabold mt-4 tracking-tight leading-tight">
             Fast Answers for Clinical Workflows
