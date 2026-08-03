@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const baseURL = "/api";
+export const baseURL = "http://backend-service:8000";
 
 export const protectedAxiosInstance = axios.create({
     baseURL,
