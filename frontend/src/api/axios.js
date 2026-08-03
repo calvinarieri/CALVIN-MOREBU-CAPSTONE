@@ -4,7 +4,6 @@ export const baseURL = "/api";
 
 export const protectedAxiosInstance = axios.create({
     baseURL,
-    timeout: 15000,
     withCredentials: true 
 });
 
