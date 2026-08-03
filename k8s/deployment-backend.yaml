@@ -32,7 +32,6 @@ spec:
             - containerPort: 8000
 
           env:
-
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -57,7 +56,6 @@ spec:
             - name: REDIS_PORT
               value: "6379"
 
-
           resources:
             requests:
               cpu: "250m"
@@ -67,24 +65,12 @@ spec:
               cpu: "500m"
               memory: "512Mi"
 
-
           startupProbe:
             httpGet:
               path: /health/
               port: 8000
             initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 12
-
-          livenessProbe:
-            httpGet:
-              path: /health/
-              port: 8000
-            initialDelaySeconds: 40
-            periodSeconds: 15
-            timeoutSeconds: 5
-            failureThreshold: 6
 
           readinessProbe:
             httpGet:
@@ -92,5 +78,10 @@ spec:
               port: 8000
             initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 15

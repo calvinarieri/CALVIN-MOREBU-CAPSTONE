@@ -8,12 +8,7 @@ RUN npm ci --legacy-peer-deps
 
 COPY . .
 
-ARG VITE_BASE_URL
-
-ENV VITE_BASE_URL=${VITE_BASE_URL}
-
 RUN npm run build
-
 
 FROM nginx:1.27-alpine
 
@@ -23,7 +18,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-
 RUN addgroup -S appgroup && \
     adduser -S appuser -G appgroup && \
     mkdir -p /tmp/nginx && \
@@ -32,7 +26,6 @@ RUN addgroup -S appgroup && \
         /var/cache/nginx \
         /etc/nginx \
         /tmp/nginx
-
 
 USER appuser
 
