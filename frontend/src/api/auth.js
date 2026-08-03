@@ -3,12 +3,14 @@ import { protectedAxiosInstance } from "./axios";
 export async function handlelogin(data){
     try{
         const res = await protectedAxiosInstance.post('/auth/login/', data)
+        console.log(res.data)
         return {
             success: true,
             status: res.status,
             data: res.data,
         };
     }catch(err){
+        console.log(err.response)
         return{
             success: false,
             status: err.response?.status || 500,
